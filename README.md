@@ -17,6 +17,32 @@ Use this template as the starting point for any new project. The agent follows t
 
 ---
 
+## Java backend jumpstart (Top 100 songs social app)
+
+This repository now includes a Quarkus backend bootstrap for a social app where users can share their Top 100 songs, check overlaps with friends, and get song suggestions.
+
+### Run
+
+```bash
+mvn quarkus:dev
+```
+
+### Test
+
+```bash
+mvn test
+```
+
+### API
+
+- `POST /api/users` with `{ "userId": "alice" }`
+- `POST /api/users/{userId}/top-songs` with `{ "track": "...", "artist": "..." }`
+- `GET /api/users/{userId}/top-songs`
+- `GET /api/users/{userId}/overlap/{friendId}`
+- `GET /api/users/{userId}/suggestions?limit=10`
+
+---
+
 ## How to use this template
 
 1. Click **"Use this template"** on GitHub to create a new repository from this one.
