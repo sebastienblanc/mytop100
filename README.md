@@ -19,12 +19,12 @@ Use this template as the starting point for any new project. The agent follows t
 
 ## Java backend jumpstart (Top 100 songs social app)
 
-This repository now includes a Spring Boot backend bootstrap for a social app where users can share their Top 100 songs, check overlaps with friends, and get song suggestions.
+This repository now includes a Quarkus backend bootstrap for a social app where users can share their Top 100 songs, check overlaps with friends, and get song suggestions.
 
 ### Run
 
 ```bash
-mvn spring-boot:run
+mvn quarkus:dev
 ```
 
 ### Test

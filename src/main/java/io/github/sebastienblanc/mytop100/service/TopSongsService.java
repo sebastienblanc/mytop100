@@ -1,7 +1,7 @@
 package io.github.sebastienblanc.mytop100.service;
 
 import io.github.sebastienblanc.mytop100.model.SongEntry;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-@Service
+@ApplicationScoped
 public class TopSongsService {
 
     private static final int MAX_TOP_SONGS = 100;
