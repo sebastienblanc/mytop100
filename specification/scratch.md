@@ -1,16 +1,33 @@
 # Scratch — raw specification input
 
-> Dump anything here to seed the specification: rough notes, a brain dump,
-> meeting notes, an existing document, links, bullet points — structure does
-> not matter. Then run the `import-specs` skill to turn this into the first
-> structured draft of `specs.md`.
->
-> You can also skip this file and point `import-specs` at any other file, or
-> just paste your notes into the conversation.
->
-> This file is a scratchpad — it is not the source of truth. Once `specs.md`
-> is populated, this file can be cleared or ignored.
+> Raw brain dump from the human. Source for the first `import-specs` draft.
 
 ---
 
-TODO: your raw notes go here.
+## What it is
+mytop100 is an app to rank my personal top 100 songs.
+
+## Hard rules
+- Only ONE song per artist allowed in the top 100.
+
+## Core features
+- Rank my top 100 songs.
+- Sort/reorder the list by sliding songs (drag & drop reordering).
+- Easy search for songs to add.
+- For each song, display: title, artist, style/genre, year of release.
+
+## Platforms
+- Mobile web app AND desktop app (responsive web).
+- Native mobile app is too complicated for now — maybe later.
+
+## Auth
+- Log in using social networks / Google / GitHub account (social login / OAuth).
+
+## Social aspect
+- Connect with friends.
+- Compare our top 100 lists.
+- See statistics and funny facts (about my list, and comparisons with friends).
+
+## Privacy / visibility
+- I can keep my top 100 as a "draft" — not visible to others.
+- Later I can publish it to make it visible.

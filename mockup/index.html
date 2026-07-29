@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mytop100 — Prototype</title>
+<style>
+  :root{
+    --bg:#0e0f13; --surface:#181a21; --surface-2:#20232c; --line:#2b2f3a;
+    --text:#eef0f5; --muted:#9aa2b1; --brand:#7c5cff; --brand-2:#22d3ee;
+    --accent:#ff5c8a; --ok:#3ddc97; --warn:#ffb454; --radius:14px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f4f5f8; --surface:#ffffff; --surface-2:#f0f1f5; --line:#e2e5ec;
+      --text:#14161c; --muted:#606775; }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+  button{font-family:inherit}
+
+  /* Prototype banner */
+  .proto-banner{
+    background:repeating-linear-gradient(45deg,#ffb45422,#ffb45422 12px,#ffb45433 12px,#ffb45433 24px);
+    color:var(--text); text-align:center; font-size:12px; font-weight:600;
+    padding:5px 10px; letter-spacing:.03em; border-bottom:1px solid var(--line);
+  }
+
+  /* App shell */
+  .app{max-width:960px;margin:0 auto;padding:0 16px 96px}
+  .topbar{
+    position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 88%,transparent);
+    backdrop-filter:blur(10px);display:flex;align-items:center;gap:12px;
+    padding:14px 4px;border-bottom:1px solid var(--line);margin-bottom:20px;
+  }
+  .logo{font-weight:800;font-size:20px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+  .logo .dot{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--brand),var(--brand-2));display:inline-grid;place-items:center;font-size:13px}
+  .spacer{flex:1}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--brand));display:grid;place-items:center;font-weight:700;font-size:14px;color:#fff;cursor:pointer}
+
+  /* Desktop nav */
+  .nav{display:flex;gap:4px;flex-wrap:wrap}
+  .nav button{
+    background:transparent;border:0;color:var(--muted);padding:8px 14px;border-radius:10px;
+    font-size:14px;font-weight:600;cursor:pointer;transition:.15s;
+  }
+  .nav button:hover{background:var(--surface-2);color:var(--text)}
+  .nav button.active{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+
+  /* Bottom nav (mobile) */
+  .bottomnav{display:none}
+  @media(max-width:680px){
+    .nav{display:none}
+    .bottomnav{
+      display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--surface);
+      border-top:1px solid var(--line);padding:6px 4px env(safe-area-inset-bottom);
+    }
+    .bottomnav button{flex:1;background:none;border:0;color:var(--muted);font-size:10px;font-weight:600;
+      display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;cursor:pointer}
+    .bottomnav button.active{color:var(--brand)}
+    .bottomnav .ic{font-size:18px}
+  }
+
+  .view{display:none;animation:fade .25s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  h1{font-size:26px;margin:0 0 4px;letter-spacing:-.02em}
+  h2{font-size:18px;margin:28px 0 12px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 20px}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+
+  .btn{background:var(--brand);color:#fff;border:0;padding:11px 18px;border-radius:11px;font-weight:700;font-size:14px;cursor:pointer;transition:.15s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:var(--surface-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+  .btn.sm{padding:7px 12px;font-size:13px;border-radius:9px}
+  .btn.block{width:100%}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+  .pill.draft{color:var(--warn)}
+  .pill.pub{color:var(--ok)}
+
+  .chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+
+  /* Song rows */
+  .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .song{
+    display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:10px 12px;transition:.12s;
+  }
+  .song.dragging{opacity:.4}
+  .song.dragover{border-color:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 40%,transparent)}
+  .rank{font-weight:800;width:34px;text-align:center;font-size:16px;color:var(--muted);flex:none}
+  .rank .n{background:linear-gradient(135deg,var(--brand),var(--brand-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cover{width:46px;height:46px;border-radius:9px;flex:none;display:grid;place-items:center;font-size:20px;color:#fff}
+  .meta{flex:1;min-width:0}
+  .meta .t{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta .a{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta .d{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+  .rowacts{display:flex;align-items:center;gap:6px;flex:none}
+  .iconbtn{background:var(--surface-2);border:1px solid var(--line);width:32px;height:32px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:15px;display:grid;place-items:center}
+  .iconbtn:hover{color:var(--text)}
+  .grip{cursor:grab;color:var(--muted);font-size:18px;padding:0 2px;flex:none;user-select:none}
+  .grip:active{cursor:grabbing}
+  .extlink{color:var(--ok);text-decoration:none;font-size:15px}
+
+  /* Search modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;display:none;align-items:flex-start;justify-content:center;padding:40px 16px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:16px;width:100%;max-width:520px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+  .modal-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .search-input{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text);font-size:15px}
+  .search-input:focus{outline:2px solid var(--brand)}
+  .results{max-height:52vh;overflow-y:auto;padding:8px}
+  .result{display:flex;align-items:center;gap:12px;padding:9px 8px;border-radius:10px;cursor:pointer}
+  .result:hover{background:var(--surface-2)}
+  .result.blocked{opacity:.55}
+  .result .add{margin-left:auto}
+
+  .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);background:var(--surface-2);color:var(--text);
+    padding:11px 18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 0 0 1px var(--line);
+    font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.28s;z-index:80;max-width:88vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 0 0 1px var(--accent);color:#fff;background:var(--accent)}
+
+  /* Login */
+  .login-wrap{min-height:70vh;display:grid;place-items:center;text-align:center}
+  .login-card{max-width:380px;width:100%}
+  .oauth{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+  .oauth button{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;border-radius:12px;
+    background:var(--surface-2);border:1px solid var(--line);color:var(--text);font-weight:700;font-size:15px;cursor:pointer}
+  .oauth button:hover{border-color:var(--brand)}
+  .oauth .ic{font-size:18px}
+
+  /* Stats */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .stat .k{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .stat .v{font-size:24px;font-weight:800;margin-top:6px;letter-spacing:-.02em}
+  .stat .v small{font-size:14px;color:var(--muted);font-weight:600}
+  .bars{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .bar-row{display:grid;grid-template-columns:70px 1fr 42px;align-items:center;gap:10px;font-size:13px}
+  .bar{height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+  .bar span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+  .bar-row .val{text-align:right;color:var(--muted);font-weight:600}
+
+  /* Users / discover */
+  .user-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .user-row:last-child{border-bottom:0}
+  .uav{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;flex:none}
+  .u-meta{flex:1;min-width:0}
+  .u-meta .n{font-weight:700}
+  .u-meta .h{color:var(--muted);font-size:13px}
+
+  /* Compare */
+  .cmp-head{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+  .cmp-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:560px){.cmp-cols{grid-template-columns:1fr}}
+  .cmp-song{display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px}
+  .cmp-song.shared{background:color-mix(in srgb,var(--brand) 14%,transparent)}
+  .cmp-song .r{font-weight:800;color:var(--muted);width:24px;text-align:center;flex:none}
+
+  .empty{text-align:center;color:var(--muted);padding:40px 16px}
+  .toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .switch{width:42px;height:24px;border-radius:999px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);position:relative;transition:.2s}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:.2s}
+  .switch.on{background:var(--ok)}
+  .switch.on::after{left:20px;background:#fff}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .count-badge{font-size:13px;color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<div class="proto-banner">⚠ Prototype — not production code · mytop100</div>
+
+<!-- ============ LOGIN VIEW ============ -->
+<div id="view-login" class="view active">
+  <div class="app">
+    <div class="login-wrap">
+      <div class="login-card card">
+        <div class="logo" style="justify-content:center;font-size:28px"><span class="dot" style="width:34px;height:34px;font-size:20px">♪</span> mytop100</div>
+        <p class="sub" style="margin-top:14px">Rank your 100 favourite songs — one per artist. Compare with friends. Discover your taste.</p>
+        <div class="oauth">
+          <button onclick="login()"><span class="ic">🟢</span> Continue with Google</button>
+          <button onclick="login()"><span class="ic">🐙</span> Continue with GitHub</button>
+          <button onclick="login()"><span class="ic">📸</span> Continue with Instagram</button>
+          <button onclick="login()"><span class="ic">✖</span> Continue with X</button>
+        </div>
+        <p class="hint" style="margin-top:20px">No passwords — social login only.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP (post-login) ============ -->
+<div id="app-shell" style="display:none">
+  <div class="app">
+    <div class="topbar">
+      <div class="logo"><span class="dot">♪</span> mytop100</div>
+      <div class="spacer"></div>
+      <nav class="nav">
+        <button data-nav="mylist" class="active" onclick="go('mylist')">My Top 100</button>
+        <button data-nav="discover" onclick="go('discover')">Discover</button>
+        <button data-nav="compare" onclick="go('compare')">Compare</button>
+        <button data-nav="stats" onclick="go('stats')">Stats</button>
+      </nav>
+      <div class="avatar" title="Alex Rivera — sign out" onclick="logout()">AR</div>
+    </div>
+
+    <!-- ---- MY TOP 100 ---- -->
+    <section id="view-mylist" class="view active">
+      <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <h1>My Top 100</h1>
+          <p class="sub" id="mylist-sub">Drag the ⠿ handle to reorder. Only one song per artist.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+          <span id="status-pill" class="pill draft">● Draft — only you can see this</span>
+          <label class="toggle" onclick="togglePublish()">
+            <span id="pub-switch" class="switch"></span>
+            <span id="pub-label" style="font-size:13px;font-weight:600">Publish to followers</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px">
+        <button class="btn" onclick="openSearch()">＋ Add a song</button>
+        <span class="spacer"></span>
+        <span class="count-badge"><b id="song-count">0</b> / 100 songs</span>
+      </div>
+
+      <div id="song-list" class="list"></div>
+      <div id="list-empty" class="empty" style="display:none">No songs yet — tap <b>Add a song</b> to start building your top 100.</div>
+    </section>
+
+    <!-- ---- DISCOVER / FOLLOW ---- -->
+    <section id="view-discover" class="view">
+      <h1>Discover</h1>
+      <p class="sub">Follow other music lovers. You can only view & compare lists that are <b>published</b>.</p>
+      <div class="card">
+        <input class="search-input" placeholder="Search people…" style="width:100%" oninput="filterUsers(this.value)">
+        <div id="user-list" style="margin-top:8px"></div>
+      </div>
+    </section>
+
+    <!-- ---- USER PROFILE / THEIR TOP 100 ---- -->
+    <section id="view-profile" class="view">
+      <button class="btn ghost sm" onclick="go('discover')">← Back to Discover</button>
+      <div style="display:flex;align-items:center;gap:14px;margin:16px 0">
+        <div id="prof-av" class="uav" style="width:60px;height:60px;font-size:22px">?</div>
+        <div>
+          <h1 id="prof-name" style="margin:0">Name</h1>
+          <p class="sub" id="prof-handle" style="margin:2px 0 0">@handle · <span id="prof-count"></span> songs</p>
+        </div>
+        <span class="spacer"></span>
+        <button class="btn sm" id="prof-compare-btn" onclick="compareWith(currentProfile)">Compare</button>
+      </div>
+      <div id="prof-list" class="list"></div>
+    </section>
+
+    <!-- ---- COMPARE ---- -->
+    <section id="view-compare" class="view">
+      <h1>Compare</h1>
+      <p class="sub">See how your taste overlaps with a friend's published list.</p>
+      <div class="cmp-head">
+        <span style="font-weight:600">Compare with:</span>
+        <select id="cmp-select" class="search-input" style="max-width:220px" onchange="renderCompare(this.value)"></select>
+      </div>
+      <div id="cmp-body"></div>
+    </section>
+
+    <!-- ---- STATS ---- -->
+    <section id="view-stats" class="view">
+      <h1>Statistics & fun facts</h1>
+      <p class="sub">Auto-generated from your top 100.</p>
+      <div id="stats-body"></div>
+    </section>
+  </div>
+
+  <!-- bottom nav -->
+  <nav class="bottomnav">
+    <button data-nav="mylist" class="active" onclick="go('mylist')"><span class="ic">🏆</span>My 100</button>
+    <button data-nav="discover" onclick="go('discover')"><span class="ic">🔎</span>Discover</button>
+    <button data-nav="compare" onclick="go('compare')"><span class="ic">⚖️</span>Compare</button>
+    <button data-nav="stats" onclick="go('stats')"><span class="ic">📊</span>Stats</button>
+  </nav>
+</div>
+
+<!-- ---- SEARCH MODAL ---- -->
+<div id="search-modal" class="modal-bg" onclick="if(event.target===this)closeSearch()">
+  <div class="modal">
+    <div class="modal-head">
+      <span style="font-size:18px">🔎</span>
+      <input id="search-box" class="search-input" placeholder="Search songs on the music catalog…" oninput="renderSearch(this.value)">
+      <button class="iconbtn" onclick="closeSearch()">✕</button>
+    </div>
+    <div id="search-results" class="results"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ---------- Mock data (stands in for the external music API) ---------- */
+const CATALOG = [
+  {id:1,  t:"Bohemian Rhapsody", a:"Queen", style:"Rock", y:1975, art:"queen"},
+  {id:2,  t:"Billie Jean", a:"Michael Jackson", style:"Pop", y:1983, art:"mj"},
+  {id:3,  t:"Smells Like Teen Spirit", a:"Nirvana", style:"Grunge", y:1991, art:"nirvana"},
+  {id:4,  t:"Lose Yourself", a:"Eminem", style:"Hip-Hop", y:2002, art:"eminem"},
+  {id:5,  t:"One", a:"U2", style:"Rock", y:1991, art:"u2"},
+  {id:6,  t:"Hotel California", a:"Eagles", style:"Rock", y:1976, art:"eagles"},
+  {id:7,  t:"Imagine", a:"John Lennon", style:"Rock", y:1971, art:"lennon"},
+  {id:8,  t:"Come Together", a:"The Beatles", style:"Rock", y:1969, art:"beatles"},
+  {id:9,  t:"Superstition", a:"Stevie Wonder", style:"Funk", y:1972, art:"wonder"},
+  {id:10, t:"Rolling in the Deep", a:"Adele", style:"Soul", y:2010, art:"adele"},
+  {id:11, t:"Get Lucky", a:"Daft Punk", style:"Electronic", y:2013, art:"daftpunk"},
+  {id:12, t:"HUMBLE.", a:"Kendrick Lamar", style:"Hip-Hop", y:2017, art:"kendrick"},
+  {id:13, t:"Blinding Lights", a:"The Weeknd", style:"Synth-Pop", y:2019, art:"weeknd"},
+  {id:14, t:"Take On Me", a:"a-ha", style:"Synth-Pop", y:1985, art:"aha"},
+  {id:15, t:"Purple Rain", a:"Prince", style:"Rock", y:1984, art:"prince"},
+  {id:16, t:"No Woman No Cry", a:"Bob Marley", style:"Reggae", y:1974, art:"marley"},
+  {id:17, t:"Wonderwall", a:"Oasis", style:"Britpop", y:1995, art:"oasis"},
+  {id:18, t:"Seven Nation Army", a:"The White Stripes", style:"Rock", y:2003, art:"whitestripes"},
+  {id:19, t:"Bad Guy", a:"Billie Eilish", style:"Pop", y:2019, art:"eilish"},
+  {id:20, t:"Redemption Song", a:"Bob Marley", style:"Reggae", y:1980, art:"marley"}, /* dup artist */
+  {id:21, t:"Watermelon Sugar", a:"Harry Styles", style:"Pop", y:2019, art:"harry"},
+  {id:22, t:"Sweet Child O' Mine", a:"Guns N' Roses", style:"Rock", y:1987, art:"gnr"},
+  {id:23, t:"Since U Been Gone", a:"Kelly Clarkson", style:"Pop", y:2004, art:"clarkson"},
+  {id:24, t:"Levels", a:"Avicii", style:"Electronic", y:2011, art:"avicii"},
+  {id:25, t:"Fast Car", a:"Tracy Chapman", style:"Folk", y:1988, art:"chapman"},
+  {id:26, t:"God's Plan", a:"Drake", style:"Hip-Hop", y:2018, art:"drake"},
+  {id:27, t:"Dancing Queen", a:"ABBA", style:"Disco", y:1976, art:"abba"},
+  {id:28, t:"Enter Sandman", a:"Metallica", style:"Metal", y:1991, art:"metallica"},
+  {id:29, t:"Toxic", a:"Britney Spears", style:"Pop", y:2003, art:"britney"},
+  {id:30, t:"Ho Hey", a:"The Lumineers", style:"Folk", y:2012, art:"lumineers"},
+];
+const COVERS=["🎸","🎹","🎤","🎧","🎺","🥁","🎷","🪕"];
+const COVERGRAD=["linear-gradient(135deg,#7c5cff,#22d3ee)","linear-gradient(135deg,#ff5c8a,#ffb454)","linear-gradient(135deg,#3ddc97,#22d3ee)","linear-gradient(135deg,#ff5c8a,#7c5cff)","linear-gradient(135deg,#ffb454,#ff5c8a)"];
+function cover(id){return {ic:COVERS[id%COVERS.length],bg:COVERGRAD[id%COVERGRAD.length]};}
+
+/* current user's list — ordered song ids */
+let myList = [1,7,3,15,9,2,6,11,16,12,10,22,5,25,13];
+
+/* friends (other users) with their published lists (or draft) */
+const USERS = {
+  sam:  {name:"Sam Okafor", handle:"sam.beats", color:"linear-gradient(135deg,#22d3ee,#7c5cff)", published:true,  list:[3,1,15,8,28,22,18,17,5,11,13,19,24,2,30]},
+  mia:  {name:"Mia Chen", handle:"miatunes", color:"linear-gradient(135deg,#ff5c8a,#ffb454)", published:true,  list:[10,19,13,21,29,23,2,27,9,16,7,11,26,12,25]},
+  leo:  {name:"LeoDuarte", handle:"leo.d", color:"linear-gradient(135deg,#3ddc97,#22d3ee)", published:true,  list:[6,22,28,3,15,5,1,18,17,8,9,7,16,24,11]},
+  noa:  {name:"Noa Weiss", handle:"noaw", color:"linear-gradient(135deg,#ffb454,#ff5c8a)", published:false, list:[]},
+};
+let currentProfile=null;
+let published=false;
+let dragId=null;
+
+/* ---------- Helpers ---------- */
+const byId=id=>CATALOG.find(s=>s.id===id);
+function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2200);}
+
+/* ---------- Auth ---------- */
+function login(){document.getElementById('view-login').classList.remove('active');document.getElementById('app-shell').style.display='block';go('mylist');renderList();buildUsers();buildCompareSelect();}
+function logout(){document.getElementById('app-shell').style.display='none';document.getElementById('view-login').classList.add('active');window.scrollTo(0,0);}
+
+/* ---------- Nav ---------- */
+function go(v){
+  document.querySelectorAll('#app-shell .view').forEach(e=>e.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===v));
+  if(v==='stats')renderStats();
+  if(v==='compare')renderCompare(document.getElementById('cmp-select').value);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- My list rendering + drag reorder ---------- */
+function songRow(id,rank){
+  const s=byId(id),c=cover(id);
+  return `<div class="song" draggable="true" data-id="${id}"
+      ondragstart="dragStart(event,${id})" ondragend="dragEnd(event)"
+      ondragover="dragOver(event,${id})" ondrop="drop(event,${id})" ondragleave="dragLeave(event)">
+    <span class="grip" title="Drag to reorder">⠿</span>
+    <span class="rank"><span class="n">${rank}</span></span>
+    <span class="cover" style="background:${c.bg}">${c.ic}</span>
+    <span class="meta">
+      <div class="t">${s.t}</div>
+      <div class="a">${s.a}</div>
+      <div class="d"><span class="chip">${s.style}</span><span class="chip">${s.y}</span></div>
+    </span>
+    <span class="rowacts">
+      <a class="iconbtn extlink" title="Open on music service" href="https://open.spotify.com/search/${encodeURIComponent(s.t+' '+s.a)}" target="_blank" rel="noopener">▶</a>
+      <button class="iconbtn" title="Remove" onclick="removeSong(${id})">🗑</button>
+    </span>
+  </div>`;
+}
+function renderList(){
+  const el=document.getElementById('song-list');
+  el.innerHTML=myList.map((id,i)=>songRow(id,i+1)).join('');
+  document.getElementById('song-count').textContent=myList.length;
+  document.getElementById('list-empty').style.display=myList.length?'none':'block';
+}
+function dragStart(e,id){dragId=id;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
+function dragEnd(e){e.currentTarget.classList.remove('dragging');document.querySelectorAll('.song').forEach(s=>s.classList.remove('dragover'));}
+function dragOver(e,id){e.preventDefault();if(id!==dragId)e.currentTarget.classList.add('dragover');}
+function dragLeave(e){e.currentTarget.classList.remove('dragover');}
+function drop(e,targetId){
+  e.preventDefault();
+  if(dragId===null||dragId===targetId)return;
+  const from=myList.indexOf(dragId), to=myList.indexOf(targetId);
+  myList.splice(from,1);
+  myList.splice(to,0,dragId);
+  renderList();
+  toast('Reordered — ranks updated');
+}
+function removeSong(id){myList=myList.filter(x=>x!==id);renderList();toast('Removed from your top 100');}
+
+/* ---------- Publish toggle ---------- */
+function togglePublish(){
+  published=!published;
+  document.getElementById('pub-switch').classList.toggle('on',published);
+  const pill=document.getElementById('status-pill');
+  if(published){pill.className='pill pub';pill.textContent='● Published — followers can see this (updates live)';toast('Your top 100 is now public 🎉');}
+  else{pill.className='pill draft';pill.textContent='● Draft — only you can see this';toast('Back to draft — hidden from others');}
+  USERS._me_published=published;
+}
+
+/* ---------- Search modal (one-per-artist rule) ---------- */
+function openSearch(){document.getElementById('search-modal').classList.add('open');document.getElementById('search-box').value='';renderSearch('');setTimeout(()=>document.getElementById('search-box').focus(),50);}
+function closeSearch(){document.getElementById('search-modal').classList.remove('open');}
+function renderSearch(q){
+  q=q.trim().toLowerCase();
+  const usedArtists=new Set(myList.map(id=>byId(id).art));
+  let items=CATALOG.filter(s=>!q||s.t.toLowerCase().includes(q)||s.a.toLowerCase().includes(q));
+  const el=document.getElementById('search-results');
+  if(!items.length){el.innerHTML='<div class="empty">No matches in the catalog.</div>';return;}
+  el.innerHTML=items.map(s=>{
+    const c=cover(s.id);
+    const inList=myList.includes(s.id);
+    const artistTaken=usedArtists.has(s.art)&&!inList;
+    let right;
+    if(inList) right='<span class="chip" style="color:var(--ok)">✓ In list</span>';
+    else if(artistTaken) right='<span class="chip" style="color:var(--accent)">1 / artist</span>';
+    else right='<button class="btn sm add" onclick="addSong('+s.id+')">＋ Add</button>';
+    return `<div class="result ${artistTaken?'blocked':''}">
+      <span class="cover" style="width:38px;height:38px;font-size:17px;background:${c.bg}">${c.ic}</span>
+      <span class="meta"><div class="t">${s.t}</div><div class="a">${s.a} · ${s.style} · ${s.y}</div></span>
+      <span class="add">${right}</span>
+    </div>`;
+  }).join('');
+}
+function addSong(id){
+  const s=byId(id);
+  if(myList.length>=100){toast('Your top 100 is full (100 / 100)',true);return;}
+  if(myList.includes(id)){toast('Already in your list',true);return;}
+  if(myList.some(x=>byId(x).art===s.art)){
+    const other=byId(myList.find(x=>byId(x).art===s.art));
+    toast('One song per artist — '+s.a+' already has "'+other.t+'"',true);
+    renderSearch(document.getElementById('search-box').value);
+    return;
+  }
+  myList.push(id);
+  renderList();
+  renderSearch(document.getElementById('search-box').value);
+  toast('Added "'+s.t+'" at #'+myList.length);
+}
+
+/* ---------- Discover / follow ---------- */
+let following=new Set(['sam','leo']);
+function buildUsers(){filterUsers('');}
+function filterUsers(q){
+  q=q.trim().toLowerCase();
+  const el=document.getElementById('user-list');
+  const rows=Object.entries(USERS).filter(([k])=>k.length<=4).filter(([k,u])=>!q||u.name.toLowerCase().includes(q)||u.handle.includes(q));
+  el.innerHTML=rows.map(([k,u])=>{
+    const init=u.name.split(' ').map(w=>w[0]).join('');
+    const isFollowing=following.has(k);
+    const status=u.published?`<span class="chip" style="color:var(--ok)">Published</span>`:`<span class="chip" style="color:var(--warn)">Draft — hidden</span>`;
+    return `<div class="user-row">
+      <span class="uav" style="background:${u.color}">${init}</span>
+      <span class="u-meta"><div class="n">${u.name} ${status}</div><div class="h">@${u.handle} · ${u.published?u.list.length+' songs':'list is private'}</div></span>
+      <button class="btn sm ${isFollowing?'ghost':''}" onclick="toggleFollow('${k}',this)">${isFollowing?'Following':'Follow'}</button>
+      ${u.published?`<button class="btn sm ghost" onclick="openProfile('${k}')">View</button>`:''}
+    </div>`;
+  }).join('');
+}
+function toggleFollow(k,btn){
+  if(following.has(k)){following.delete(k);btn.textContent='Follow';btn.classList.remove('ghost');toast('Unfollowed '+USERS[k].name);}
+  else{following.add(k);btn.textContent='Following';btn.classList.add('ghost');toast('Now following '+USERS[k].name);}
+}
+function openProfile(k){
+  const u=USERS[k];currentProfile=k;
+  if(!u.published){toast('This list is a private draft',true);return;}
+  document.getElementById('prof-name').textContent=u.name;
+  document.getElementById('prof-handle').innerHTML='@'+u.handle;
+  document.getElementById('prof-count').textContent=u.list.length;
+  const av=document.getElementById('prof-av');av.style.background=u.color;av.textContent=u.name.split(' ').map(w=>w[0]).join('');
+  document.getElementById('prof-list').innerHTML=u.list.map((id,i)=>{
+    const s=byId(id),c=cover(id);
+    return `<div class="song"><span class="rank"><span class="n">${i+1}</span></span>
+      <span class="cover" style="background:${c.bg}">${c.ic}</span>
+      <span class="meta"><div class="t">${s.t}</div><div class="a">${s.a}</div><div class="d"><span class="chip">${s.style}</span><span class="chip">${s.y}</span></div></span></div>`;
+  }).join('');
+  go('profile');
+}
+
+/* ---------- Compare ---------- */
+function buildCompareSelect(){
+  const sel=document.getElementById('cmp-select');
+  sel.innerHTML=Object.entries(USERS).filter(([k,u])=>k.length<=4&&u.published).map(([k,u])=>`<option value="${k}">${u.name}</option>`).join('');
+}
+function compareWith(k){document.getElementById('cmp-select').value=k;go('compare');}
+function renderCompare(k){
+  if(!k){return;}
+  const u=USERS[k];
+  const mine=new Set(myList), theirs=new Set(u.list);
+  const sharedIds=myList.filter(id=>theirs.has(id));
+  const sharedArtists=new Set(myList.map(id=>byId(id).art)).size &&
+     [...new Set(myList.map(id=>byId(id).art))].filter(art=>u.list.some(id=>byId(id).art===art));
+  const union=new Set([...mine,...theirs]);
+  const overlap=Math.round(sharedIds.length/union.size*100);
+  // biggest ranking gap on shared songs
+  let biggest={gap:-1};
+  sharedIds.forEach(id=>{const g=Math.abs(myList.indexOf(id)-u.list.indexOf(id));if(g>biggest.gap)biggest={gap:g,id};});
+  const body=document.getElementById('cmp-body');
+  body.innerHTML=`
+    <div class="stat-grid" style="margin-bottom:18px">
+      <div class="stat"><div class="k">Song overlap</div><div class="v">${overlap}<small>%</small></div></div>
+      <div class="stat"><div class="k">Shared songs</div><div class="v">${sharedIds.length}</div></div>
+      <div class="stat"><div class="k">Shared artists</div><div class="v">${sharedArtists.length}</div></div>
+      <div class="stat"><div class="k">Biggest ranking gap</div><div class="v">${biggest.gap>=0?biggest.gap:'—'}<small> ${biggest.id?'· '+byId(biggest.id).t:''}</small></div></div>
+    </div>
+    <div class="cmp-cols">
+      <div class="card"><h2 style="margin-top:0">You (Alex)</h2>${cmpCol(myList,theirs)}</div>
+      <div class="card"><h2 style="margin-top:0">${u.name}</h2>${cmpCol(u.list,mine)}</div>
+    </div>
+    <p class="hint" style="margin-top:12px">Highlighted rows are songs you both ranked.</p>`;
+}
+function cmpCol(list,otherSet){
+  return list.slice(0,15).map((id,i)=>{
+    const s=byId(id),shared=otherSet.has(id);
+    return `<div class="cmp-song ${shared?'shared':''}"><span class="r">${i+1}</span>
+      <span class="meta"><div class="t" style="font-size:14px">${s.t} ${shared?'🔗':''}</div><div class="a">${s.a}</div></span></div>`;
+  }).join('');
+}
+
+/* ---------- Stats ---------- */
+function renderStats(){
+  if(!myList.length){document.getElementById('stats-body').innerHTML='<div class="empty">Add songs to see your stats.</div>';return;}
+  const songs=myList.map(byId);
+  const years=songs.map(s=>s.y);
+  const oldest=songs.reduce((a,b)=>a.y<b.y?a:b);
+  const newest=songs.reduce((a,b)=>a.y>b.y?a:b);
+  const avg=Math.round(years.reduce((a,b)=>a+b,0)/years.length);
+  // decade distribution
+  const dec={};songs.forEach(s=>{const d=Math.floor(s.y/10)*10;dec[d]=(dec[d]||0)+1;});
+  const topDecade=Object.entries(dec).sort((a,b)=>b[1]-a[1])[0];
+  // genre breakdown
+  const gen={};songs.forEach(s=>{gen[s.style]=(gen[s.style]||0)+1;});
+  const decRows=Object.entries(dec).sort((a,b)=>a[0]-b[0]).map(([d,n])=>bar(d+'s',n,songs.length)).join('');
+  const genRows=Object.entries(gen).sort((a,b)=>b[1]-a[1]).map(([g,n])=>bar(g,n,songs.length)).join('');
+  document.getElementById('stats-body').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat"><div class="k">Songs ranked</div><div class="v">${songs.length}<small> / 100</small></div></div>
+      <div class="stat"><div class="k">Oldest song</div><div class="v">${oldest.y}</div><div class="hint">${oldest.t} — ${oldest.a}</div></div>
+      <div class="stat"><div class="k">Newest song</div><div class="v">${newest.y}</div><div class="hint">${newest.t} — ${newest.a}</div></div>
+      <div class="stat"><div class="k">Average year</div><div class="v">${avg}</div></div>
+      <div class="stat"><div class="k">Most-common decade</div><div class="v">${topDecade[0]}s</div><div class="hint">${topDecade[1]} songs</div></div>
+      <div class="stat"><div class="k">Distinct genres</div><div class="v">${Object.keys(gen).length}</div></div>
+    </div>
+    <h2>Decade distribution</h2><div class="card"><div class="bars">${decRows}</div></div>
+    <h2>Style / genre breakdown</h2><div class="card"><div class="bars">${genRows}</div></div>
+    <h2>Fun fact</h2><div class="card">🎉 Your taste spans <b>${newest.y-oldest.y} years</b> of music — from <b>${oldest.a}</b> (${oldest.y}) to <b>${newest.a}</b> (${newest.y}).</div>`;
+}
+function bar(label,n,total){
+  const pct=Math.round(n/total*100);
+  return `<div class="bar-row"><span>${label}</span><span class="bar"><span style="width:${pct}%"></span></span><span class="val">${n}</span></div>`;
+}
+</script>
+</body>
+</html>

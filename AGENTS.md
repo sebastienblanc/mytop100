@@ -1,8 +1,8 @@
 ---
-title: TODO — project title
-description: TODO — brief description of the project.
-sultan_phase: Not started
-iterations: 0
+title: mytop100
+description: A responsive web app to rank your top 100 songs (one song per artist), with social login, friend list comparisons, and stats.
+sultan_phase: 2 — Mockup
+iterations: 1
 mockup_url: "" # GitHub Pages link, filled in once the mockup is deployed
 ---
 
@@ -14,17 +14,21 @@ mockup_url: "" # GitHub Pages link, filled in once the mockup is deployed
 
 <!-- Managed by the `update-phase` skill. Do not edit manually. -->
 
-**Phase:** —
-**Iteration:** —
-**Status:** Not started
+**Phase:** 2 — Mockup
+**Iteration:** 1
+**Status:** In Progress
 
 ---
 
 ## Project Overview
 
-<!-- Fill in when forking this template. -->
-
-TODO: brief description of the project.
+**mytop100** is a responsive web application (mobile + desktop) for ranking your
+personal top 100 songs, with one hard rule: only one song per artist. Users
+search for and add songs, reorder the list by dragging, and see each song's
+title, artist, style, and year. Authentication is via social login
+(Google, GitHub, other social networks). A social layer lets users connect with
+friends, compare top 100 lists, and view statistics and fun facts. Lists start
+as private drafts and can later be published.
 
 ---
 
