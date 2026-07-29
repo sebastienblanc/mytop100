@@ -105,8 +105,10 @@
   .rowacts{display:flex;align-items:center;gap:6px;flex:none}
   .iconbtn{background:var(--surface-2);border:1px solid var(--line);width:32px;height:32px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:15px;display:grid;place-items:center}
   .iconbtn:hover{color:var(--text)}
-  .grip{cursor:grab;color:var(--muted);font-size:18px;padding:0 2px;flex:none;user-select:none}
+  .grip{cursor:grab;color:var(--muted);font-size:20px;padding:6px 6px;margin:-6px -2px;flex:none;user-select:none;touch-action:none;-webkit-user-select:none;-webkit-touch-callout:none}
   .grip:active{cursor:grabbing}
+  body.reordering{user-select:none;-webkit-user-select:none}
+  .song.lift{box-shadow:0 8px 24px rgba(0,0,0,.35);transform:scale(1.02);position:relative;z-index:5}
   .extlink{color:var(--ok);text-decoration:none;font-size:15px}
 
   /* Search modal */
@@ -355,7 +357,7 @@ const USERS = {
 };
 let currentProfile=null;
 let published=false;
-let dragId=null;
+let dragId=null, dragging=false;
 
 /* ---------- Helpers ---------- */
 const byId=id=>CATALOG.find(s=>s.id===id);
@@ -378,10 +380,8 @@ function go(v){
 /* ---------- My list rendering + drag reorder ---------- */
 function songRow(id,rank){
   const s=byId(id),c=cover(id);
-  return `<div class="song" draggable="true" data-id="${id}"
-      ondragstart="dragStart(event,${id})" ondragend="dragEnd(event)"
-      ondragover="dragOver(event,${id})" ondrop="drop(event,${id})" ondragleave="dragLeave(event)">
-    <span class="grip" title="Drag to reorder">⠿</span>
+  return `<div class="song" data-id="${id}">
+    <span class="grip" title="Drag to reorder" onpointerdown="startDrag(event,${id})">⠿</span>
     <span class="rank"><span class="n">${rank}</span></span>
     <span class="cover" style="background:${c.bg}">${c.ic}</span>
     <span class="meta">
@@ -401,18 +401,49 @@ function renderList(){
   document.getElementById('song-count').textContent=myList.length;
   document.getElementById('list-empty').style.display=myList.length?'none':'block';
 }
-function dragStart(e,id){dragId=id;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
-function dragEnd(e){e.currentTarget.classList.remove('dragging');document.querySelectorAll('.song').forEach(s=>s.classList.remove('dragover'));}
-function dragOver(e,id){e.preventDefault();if(id!==dragId)e.currentTarget.classList.add('dragover');}
-function dragLeave(e){e.currentTarget.classList.remove('dragover');}
-function drop(e,targetId){
+/* Pointer-based reorder — works for both touch (mobile) and mouse (desktop).
+   HTML5 drag-and-drop does not fire on touchscreens, so we use Pointer Events. */
+function markDragging(){const r=document.querySelector('.song[data-id="'+dragId+'"]');if(r)r.classList.add('lift');}
+function startDrag(e,id){
+  e.preventDefault();                 // grip has touch-action:none so this gesture won't scroll
+  dragId=id; dragging=true; moved=false;
+  document.body.classList.add('reordering');
+  markDragging();
+  document.addEventListener('pointermove',onDragMove,{passive:false});
+  document.addEventListener('pointerup',endDrag);
+  document.addEventListener('pointercancel',endDrag);
+}
+let moved=false;
+function onDragMove(e){
+  if(!dragging)return;
   e.preventDefault();
-  if(dragId===null||dragId===targetId)return;
-  const from=myList.indexOf(dragId), to=myList.indexOf(targetId);
+  // auto-scroll near the viewport edges so long lists stay reachable
+  const edge=90;
+  if(e.clientY<edge) window.scrollBy(0,-12);
+  else if(e.clientY>window.innerHeight-edge) window.scrollBy(0,12);
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  const row=el&&el.closest?el.closest('.song'):null;
+  if(!row)return;
+  const overId=+row.dataset.id;
+  if(!overId||overId===dragId||!myList.includes(overId))return;
+  const from=myList.indexOf(dragId), to=myList.indexOf(overId);
   myList.splice(from,1);
   myList.splice(to,0,dragId);
+  moved=true;
   renderList();
-  toast('Reordered — ranks updated');
+  markDragging();
+}
+function endDrag(){
+  if(!dragging)return;
+  dragging=false;
+  document.body.classList.remove('reordering');
+  const r=document.querySelector('.song[data-id="'+dragId+'"]');
+  if(r)r.classList.remove('lift');
+  document.removeEventListener('pointermove',onDragMove);
+  document.removeEventListener('pointerup',endDrag);
+  document.removeEventListener('pointercancel',endDrag);
+  if(moved)toast('Reordered — ranks updated');
+  dragId=null;
 }
 function removeSong(id){myList=myList.filter(x=>x!==id);renderList();toast('Removed from your top 100');}
 

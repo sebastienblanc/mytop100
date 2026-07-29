@@ -25,7 +25,9 @@ Start at the **Login** screen and pick any provider to enter the app.
 
 ## Interactions demonstrated
 
-- **Drag-to-reorder** the top 100 via the ⠿ handle; ranks renumber live.
+- **Drag-to-reorder** the top 100 via the ⠿ handle; ranks renumber live. Works
+  on both **touch (mobile)** and **mouse (desktop)** via Pointer Events, with
+  edge auto-scroll for long lists.
 - **One song per artist** rule enforced in search (blocked entries show a `1 / artist` badge; adding a taken artist shows an error toast).
 - **100-song hard cap** enforced on add.
 - **Draft ⇄ Published** toggle; draft lists are hidden from others; published lists update live.
