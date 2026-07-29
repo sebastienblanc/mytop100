@@ -3,7 +3,7 @@ title: mytop100
 description: A responsive web app to rank your top 100 songs (one song per artist), with social login, friend list comparisons, and stats.
 sultan_phase: 2 — Mockup
 iterations: 1
-mockup_url: "" # GitHub Pages link, filled in once the mockup is deployed
+mockup_url: "https://sebastienblanc.github.io/mytop100/" # GitHub Pages link, filled in once the mockup is deployed
 ---
 
 # Agent Instructions
